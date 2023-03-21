@@ -35,15 +35,29 @@ def polls(id):
 @app.route("/polls", methods=["GET", "POST"])
 def create_poll():
     if request.method == "GET":
-        pass
+        return render_template("new_poll.html")
     elif request.method == "POST":
-        pass
+        poll = request.form['poll']
+        option1 = request.form['option1']
+        option2 = request.form['option2']
+        option3 = request.form['option3']
+        polls_df.loc[max(polls_df.index.values) + 1] = [poll, option1, option2, option3, 0, 0, 0]
+        polls_df.to_csv("polls.csv")
+        return redirect(url_for("index"))
 
 @app.route("/vote/<id>/<option>")
 def vote(id, option):
-    pass
+    if request.cookies.get(f"vote_{id}_cookie") is None:
+        polls_df.at[int(id), "votes"+str(option)] += 1
+        polls_df.to_csv("polls.csv")
+        response = make_response(redirect(url_for("polls", id=id)))
+        response.set_cookie(f"vote_{id}_cookie", str(option))
+        return response
+    else:
+        return "Cannot vote more than once!"
 
 if __name__ == "__main__":
     app.run(host="localhost", debug=True)
+
 
 
